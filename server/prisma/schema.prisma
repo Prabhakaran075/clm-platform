@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  Admin
+  Manager
+  StoreOwner
+  DeptManager
+  Vendor
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  name                String
+  email               String   @unique
+  password            String
+  mobile              String?
+  role                Role     @default(Manager)
+  businessName        String?
+  businessCategory    String?
+  businessDescription String?
+  avatar              String?
+  department          String?
+  vendorId            String?
+  vendor              Vendor?  @relation("UserVendor", fields: [vendorId], references: [id])
+  ownedVendors        Vendor[] @relation("VendorOwner")
+  contracts           Contract[] @relation("ContractOwner")
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum VendorStatus {
+  Active
+  Inactive
+  Blacklisted
+}
+
+model Vendor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  type      String
+  status    VendorStatus @default(Active)
+  address   Json?
+  ownerId   String?
+  owner     User?    @relation("VendorOwner", fields: [ownerId], references: [id])
+  users     User[]   @relation("UserVendor")
+  contracts Contract[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ContractStatus {
+  Draft
+  Under_Review @map("Under Review")
+  Approved
+  Active
+  Expiring_Soon @map("Expiring Soon")
+  Expired
+  Archived
+}
+
+model Contract {
+  id             String         @id @default(uuid())
+  title          String
+  vendorId       String
+  vendor         Vendor         @relation(fields: [vendorId], references: [id])
+  ownerId        String
+  owner          User           @relation("ContractOwner", fields: [ownerId], references: [id])
+  status         ContractStatus @default(Draft)
+  startDate      DateTime
+  endDate        DateTime
+  department     String         @default("General")
+  value          Json
+  content        String?
+  attachments    Json?
+  version        Int            @default(1)
+  rootContractId String?
+  isLatest       Boolean        @default(true)
+  auditLogs      AuditLog[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([vendorId])
+  @@index([status])
+  @@index([endDate])
+}
+
+enum AuditAction {
+  Create
+  Edit
+  Approve
+  Reject
+  Renew
+  Archive
+  View
+  Download
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  action     AuditAction
+  contractId String
+  contract   Contract    @relation(fields: [contractId], references: [id])
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  userName   String?
+  details    String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([contractId, createdAt(sort: Desc)])
+  @@index([userId])
+  @@index([action])
+}
+
+enum NotificationType {
+  Approval_Request @map("Approval Request")
+  Contract_Approved @map("Contract Approved")
+  Contract_Rejected @map("Contract Rejected")
+  Expiry_Reminder @map("Expiry Reminder")
+  Vendor_Update @map("Vendor Update")
+  System
+}
+
+enum Priority {
+  Low
+  Normal
+  High
+  Urgent
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String
+  recipient   User             @relation(fields: [recipientId], references: [id])
+  type        NotificationType
+  message     String
+  link        String?
+  isRead      Boolean          @default(false)
+  priority    Priority         @default(Normal)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([recipientId, isRead, createdAt(sort: Desc)])
+}

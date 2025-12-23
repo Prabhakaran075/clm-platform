@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-main: hsla(245, 50%, 96%, 1);
+    --bg-secondary: hsla(225, 60%, 97%, 1);
+    --bg-accent: hsla(280, 50%, 96%, 1);
+  }
+
+  .dark {
+    --bg-main: hsla(222, 47%, 11%, 1);
+    --bg-secondary: hsla(217, 33%, 17%, 1);
+    --bg-accent: hsla(230, 45%, 15%, 1);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased transition-colors duration-500;
+    background-image: radial-gradient(at 0% 0%, var(--bg-main) 0, transparent 50%),
+      radial-gradient(at 50% 100%, var(--bg-secondary) 0, transparent 50%),
+      radial-gradient(at 100% 0%, var(--bg-accent) 0, transparent 50%);
+    background-size: 100% 100vh;
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-lg shadow-indigo-500/30 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 focus:ring-slate-500 active:scale-95;
+  }
+
+  .input {
+    @apply block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 px-3 border transition-all duration-300 text-slate-900 dark:text-slate-100;
+  }
+
+  .form-input {
+    @apply block w-full rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm py-3 px-4 border transition-all duration-300 placeholder:text-slate-400 font-medium text-slate-900 dark:text-slate-100;
+  }
+
+  .glass-card {
+    @apply bg-white/80 dark:bg-slate-900/70 backdrop-blur-md border border-white/40 dark:border-white/5 shadow-2xl shadow-slate-200/50 dark:shadow-none rounded-2xl transition-all duration-500;
+  }
+
+  .glass-panel {
+    @apply bg-white/90 dark:bg-black/60 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 shadow-2xl shadow-slate-200/60 dark:shadow-none transition-all duration-500;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
+  }
+
+  /* Theme-aware text colors */
+  .text-main {
+    @apply text-slate-900 dark:text-slate-100;
+  }
+
+  .text-muted {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+
+  /* Native Date Picker Theme Fix */
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
