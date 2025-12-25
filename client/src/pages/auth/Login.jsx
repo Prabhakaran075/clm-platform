@@ -19,7 +19,7 @@ const Login = () => {
         const res = await login(email, password);
         setIsLoading(false);
         if (res.success) {
-            navigate('/');
+            navigate('/dashboard');
         } else {
             setError(res.error);
         }
@@ -53,10 +53,10 @@ const Login = () => {
                             <span className="w-2 h-2 rounded-full bg-green-400"></span>
                             SOC2 Compliant
                         </div>
-                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-white/20">
+                        {/* <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-white/20">
                             <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                             256-bit Encryption
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
@@ -138,16 +138,16 @@ const Login = () => {
                             {!isLoading && <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />}
                         </button>
 
-                        <div className="relative">
+                        {/* <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-slate-200"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
                                 <span className="bg-white px-2 text-slate-500 text-xs uppercase tracking-wider">Or continue with</span>
                             </div>
-                        </div>
+                        </div> */}
 
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* <div className="grid grid-cols-2 gap-3">
                             <button type="button" className="btn btn-secondary flex justify-center items-center gap-2 py-2 text-sm font-medium">
                                 <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
                                     <path d="M12.0003 20.45c4.6667 0 8.45-3.7833 8.45-8.45 0-4.6667-3.7833-8.45-8.45-8.45-4.6667 0-8.45 3.7833-8.45 8.45 0 4.6667 3.7833 8.45 8.45 8.45Z" fill="#fff" />
@@ -161,7 +161,7 @@ const Login = () => {
                             <button type="button" className="btn btn-secondary flex justify-center items-center gap-2 py-2 text-sm font-medium">
                                 SSO
                             </button>
-                        </div>
+                        </div> */}
                     </form>
 
                     <div className="text-center text-sm">

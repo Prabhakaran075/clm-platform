@@ -72,7 +72,7 @@ const getAiSummary = async (req, res) => {
         }
 
         const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey || apiKey === 'AIzaSyAdQ3-7wdH58s_a19asSPc3Pidyj071ssU') {
+        if (!apiKey) {
             return res.json({ summary: "AI Summary is unavailable (Missing API Key)." });
         }
 

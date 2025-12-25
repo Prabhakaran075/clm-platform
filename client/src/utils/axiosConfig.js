@@ -4,6 +4,7 @@ import axios from 'axios';
 // In production this would be the actual API URL
 // Set base URL to empty to use Vite proxy (which avoids CORS issues)
 axios.defaults.baseURL = '';
+axios.defaults.withCredentials = true;
 
 // Interceptor to add token to requests
 axios.interceptors.request.use(

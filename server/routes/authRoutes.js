@@ -7,7 +7,8 @@ const {
     verifyPassword,
     getUserProfile,
     updateUserProfile,
-    updateUserPassword
+    updateUserPassword,
+    logoutUser
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -24,6 +25,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 router.post('/login', authUser);
+router.post('/logout', logoutUser);
 router.post('/register', upload.single('avatar'), registerUser);
 router.post('/verify-password', protect, verifyPassword);
 

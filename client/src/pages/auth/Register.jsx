@@ -70,7 +70,7 @@ const Register = () => {
             );
 
             if (res.success) {
-                navigate('/');
+                navigate('/dashboard');
             } else {
                 setError(res.error);
             }
@@ -109,10 +109,10 @@ const Register = () => {
                             <span className="w-2 h-2 rounded-full bg-green-400"></span>
                             SOC2 Compliant
                         </div>
-                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-white/20">
+                        {/* <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-white/20">
                             <span className="w-2 h-2 rounded-full bg-blue-400"></span>
                             256-bit Encryption
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

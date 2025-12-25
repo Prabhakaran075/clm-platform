@@ -13,13 +13,22 @@ const authUser = async (req, res) => {
     });
 
     if (user && (await bcrypt.compare(password, user.password))) {
+        const token = generateToken(user.id);
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
         res.json({
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
             avatar: user.avatar,
-            token: generateToken(user.id),
+            token, // Keep token in response for backward compatibility
         });
     } else {
         res.status(401).json({ message: 'Invalid email or password' });
@@ -62,13 +71,22 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+        const token = generateToken(user.id);
+
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        });
+
         res.status(201).json({
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
             avatar: user.avatar,
-            token: generateToken(user.id)
+            token
         });
     } else {
         res.status(400).json({ message: 'Invalid user data' });
@@ -160,6 +178,15 @@ const updateUserProfile = async (req, res) => {
                 data: updateData
             });
 
+            const token = generateToken(updatedUser.id);
+
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Lax',
+                maxAge: 24 * 60 * 60 * 1000 // 24 hours
+            });
+
             res.json({
                 id: updatedUser.id,
                 name: updatedUser.name,
@@ -171,7 +198,7 @@ const updateUserProfile = async (req, res) => {
                 businessDescription: updatedUser.businessDescription,
                 department: updatedUser.department,
                 avatar: updatedUser.avatar,
-                token: generateToken(updatedUser.id)
+                token
             });
         } else {
             res.status(404).json({ message: 'User not found' });
@@ -211,11 +238,23 @@ const updateUserPassword = async (req, res) => {
     }
 };
 
+// @desc    Logout user / clear cookie
+// @route   POST /api/auth/logout
+// @access  Public
+const logoutUser = async (req, res) => {
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    });
+    res.json({ message: 'Logged out successfully' });
+};
+
 module.exports = {
     authUser,
     registerUser,
     verifyPassword,
     getUserProfile,
     updateUserProfile,
-    updateUserPassword
+    updateUserPassword,
+    logoutUser
 };

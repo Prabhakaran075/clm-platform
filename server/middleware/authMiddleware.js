@@ -4,13 +4,17 @@ const { prisma } = require('../config/db');
 const protect = async (req, res, next) => {
     let token;
 
-    if (
+    if (req.cookies && req.cookies.jwt) {
+        token = req.cookies.jwt;
+    } else if (
         req.headers.authorization &&
         req.headers.authorization.startsWith('Bearer')
     ) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
+        token = req.headers.authorization.split(' ')[1];
+    }
 
+    if (token) {
+        try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             req.user = await prisma.user.findUnique({
@@ -33,9 +37,7 @@ const protect = async (req, res, next) => {
             console.error('Token verification error:', error);
             res.status(401).json({ message: 'Not authorized, token failed' });
         }
-    }
-
-    if (!token) {
+    } else {
         res.status(401).json({ message: 'Not authorized, no token' });
     }
 };

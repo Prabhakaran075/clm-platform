@@ -13,17 +13,20 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 import ContractEdit from './pages/contracts/ContractEdit';
 import Profile from './pages/profile/Profile';
 import Settings from './pages/settings/Settings';
+import Documentation from './pages/docs/Documentation';
+import Landing from './pages/landing/Landing';
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/contracts" element={<Contracts />} />
           <Route path="/contracts/new" element={<ContractCreate />} />
@@ -33,6 +36,7 @@ function App() {
           <Route path="/vendors/:id" element={<VendorDetails />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/documentation" element={<Documentation />} />
         </Route>
       </Route>
     </Routes>

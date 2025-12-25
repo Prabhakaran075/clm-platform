@@ -9,7 +9,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const { logout, user } = useAuth();
 
     let navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Contracts', href: '/contracts', icon: FileText },
         { name: 'Vendors', href: '/vendors', icon: Users },
         { name: 'Settings', href: '/settings', icon: Settings },
@@ -83,9 +83,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 <div className="bg-indigo-50 dark:bg-indigo-500/5 rounded-xl p-4 border border-indigo-100/50 dark:border-indigo-500/10">
                     <p className="text-xs font-medium text-indigo-900 dark:text-indigo-300 mb-1">Need Help?</p>
                     <p className="text-[10px] text-indigo-600 dark:text-indigo-400/80 mb-3">Check our docs or contact support.</p>
-                    <button className="w-full bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold py-1.5 rounded-lg shadow-sm hover:shadow transition-all">
+                    <Link
+                        to="/documentation"
+                        onClick={() => setIsOpen(false)}
+                        className="w-full bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-xs font-bold py-1.5 rounded-lg shadow-sm hover:shadow transition-all inline-flex items-center justify-center text-center"
+                    >
                         Documentation
-                    </button>
+                    </Link>
                 </div>
             </div>
         </div>
