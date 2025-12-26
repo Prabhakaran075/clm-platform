@@ -62,6 +62,7 @@ const Register = () => {
             }
         };
 
+
         const timeoutId = setTimeout(() => {
             if (formData.email) checkEmail();
         }, 600);
