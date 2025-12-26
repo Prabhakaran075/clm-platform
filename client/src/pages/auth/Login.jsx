@@ -64,8 +64,8 @@ const Login = () => {
             {/* Right Side - Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-12 relative">
                 {/* Decorative background blobs */}
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-1/2 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-1/2 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
 
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
