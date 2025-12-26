@@ -36,9 +36,16 @@ model User {
   contracts           Contract[] @relation("ContractOwner")
   auditLogs           AuditLog[]
   notifications       Notification[]
+  resetPasswordOTP   String?
+  resetPasswordExpires DateTime?
+  isVerified          Boolean  @default(false)
+  verificationOTP     String?
+  verificationExpires DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+
 
 enum VendorStatus {
   Active

@@ -8,7 +8,15 @@ const {
     getUserProfile,
     updateUserProfile,
     updateUserPassword,
-    logoutUser
+    logoutUser,
+    forgotPassword,
+    verifyOTP,
+    resetPassword,
+    verifyEmail,
+    checkEmailAvailability
+
+
+
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -34,5 +42,14 @@ router.route('/profile')
     .put(protect, upload.single('avatar'), updateUserProfile);
 
 router.put('/password', protect, updateUserPassword);
+
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-otp', verifyOTP);
+router.post('/reset-password', resetPassword);
+router.post('/verify-email', verifyEmail);
+router.get('/check-email/:email', checkEmailAvailability);
+
+
+
 
 module.exports = router;

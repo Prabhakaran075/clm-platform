@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, User, Mail, Lock, Briefcase, Phone, Building, ArrowRight, ArrowLeft, Upload } from 'lucide-react';
+import { FileText, User, Mail, Lock, Briefcase, Phone, Building, ArrowRight, ArrowLeft, Upload, ShieldCheck, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import axios from 'axios';
+
+
 
 const Register = () => {
     const [step, setStep] = useState(1);
@@ -18,15 +21,56 @@ const Register = () => {
     });
 
     const [error, setError] = useState('');
-    const { register } = useAuth();
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState(null);
+    const [verificationOTP, setVerificationOTP] = useState('');
+    const [emailStatus, setEmailStatus] = useState('none'); // none, checking, available, taken
+    const { register, verifyEmail } = useAuth();
+    const navigate = useNavigate();
+
+
+
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+        if (name === 'email') {
+            setEmailStatus('none');
+        }
     };
+
+    useEffect(() => {
+        const checkEmail = async () => {
+            if (!formData.email) {
+                setEmailStatus('none');
+                return;
+            }
+
+            // Check if it's a gmail domain
+            if (!formData.email.toLowerCase().endsWith('@gmail.com')) {
+                setEmailStatus('invalid_domain');
+                return;
+            }
+
+            setEmailStatus('checking');
+            try {
+                const { data } = await axios.get(`/api/auth/check-email/${formData.email}`);
+                setEmailStatus(data.available ? 'available' : 'taken');
+            } catch (err) {
+                setEmailStatus('none');
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            if (formData.email) checkEmail();
+        }, 600);
+
+        return () => clearTimeout(timeoutId);
+    }, [formData.email]);
+
+
+
 
     const handleNext = (e) => {
         e.preventDefault();
@@ -35,8 +79,18 @@ const Register = () => {
             setError('Please fill in all fields');
             return;
         }
+        if (emailStatus === 'invalid_domain') {
+            setError('Please enter a valid Google Gmail address (e.g., user@gmail.com)');
+            return;
+        }
+        if (emailStatus === 'taken') {
+            setError('This Gmail address is already registered. Please login or use another account.');
+            return;
+        }
         setStep(2);
     };
+
+
 
     const handleBack = () => {
         setError('');
@@ -70,7 +124,7 @@ const Register = () => {
             );
 
             if (res.success) {
-                navigate('/dashboard');
+                setStep(3); // Move to OTP verification step
             } else {
                 setError(res.error);
             }
@@ -80,6 +134,25 @@ const Register = () => {
             setIsLoading(false);
         }
     };
+
+    const handleVerifyEmail = async (e) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+        try {
+            const res = await verifyEmail(formData.email, verificationOTP);
+            if (res.success) {
+                navigate('/dashboard');
+            } else {
+                setError(res.error);
+            }
+        } catch (err) {
+            setError('Verification failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
 
     return (
         <div className="flex min-h-screen bg-slate-50">
@@ -127,8 +200,9 @@ const Register = () => {
                     <div className="mb-8">
                         <h2 className="text-2xl font-bold tracking-tight text-slate-900 font-heading">Create your account</h2>
                         <p className="mt-2 text-sm text-slate-500">
-                            Step {step} of 2
+                            Step {step} of 3
                         </p>
+
                     </div>
 
                     <AnimatePresence mode="wait">
@@ -151,22 +225,40 @@ const Register = () => {
                                         value={formData.name}
                                         onChange={handleChange}
                                         className="w-full px-0 py-2 border-b border-slate-200 focus:border-indigo-600 focus:ring-0 text-slate-900 placeholder-slate-400 bg-transparent transition-colors outline-none"
-                                        placeholder="John Doe"
+                                        placeholder="Your Name"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-600 mb-1.5">Email address</label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        required
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        className="w-full px-0 py-2 border-b border-slate-200 focus:border-indigo-600 focus:ring-0 text-slate-900 placeholder-slate-400 bg-transparent transition-colors outline-none"
-                                        placeholder="you@company.com"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            className={`w-full px-0 py-2 border-b ${emailStatus === 'taken' ? 'border-red-500' : 'border-slate-200'} focus:border-indigo-600 focus:ring-0 text-slate-900 placeholder-slate-400 bg-transparent transition-colors outline-none`}
+                                            placeholder="you@company.com"
+                                        />
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                            {emailStatus === 'checking' && <Loader2 size={16} className="animate-spin text-slate-400" />}
+                                            {emailStatus === 'available' && <CheckCircle size={16} className="text-emerald-500" />}
+                                            {(emailStatus === 'taken' || emailStatus === 'invalid_domain') && <XCircle size={16} className="text-red-500" />}
+                                        </div>
+                                    </div>
+                                    {emailStatus === 'invalid_domain' && (
+                                        <p className="text-[10px] text-red-500 mt-1 font-medium">Please enter a valid @gmail.com address.</p>
+                                    )}
+                                    {emailStatus === 'taken' && (
+                                        <p className="text-[10px] text-red-500 mt-1 font-medium">This Gmail is already registered.</p>
+                                    )}
+                                    {emailStatus === 'available' && (
+                                        <p className="text-[10px] text-emerald-600 mt-1 font-medium">This Gmail is available.</p>
+                                    )}
                                 </div>
+
+
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-600 mb-1.5">Mobile number</label>
@@ -200,12 +292,16 @@ const Register = () => {
 
                                 <button
                                     type="submit"
-                                    className="w-full btn bg-slate-500 hover:bg-slate-600 text-white flex justify-center items-center gap-2 py-3 mt-8 rounded-lg transition-colors"
+                                    disabled={emailStatus !== 'available'}
+                                    className="w-full btn bg-slate-500 hover:bg-slate-600 text-white flex justify-center items-center gap-2 py-3 mt-8 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Next
                                 </button>
+
+
+
                             </motion.form>
-                        ) : (
+                        ) : step === 2 ? (
                             <motion.form
                                 key="step2"
                                 initial={{ opacity: 0, x: 20 }}
@@ -324,7 +420,52 @@ const Register = () => {
                                     </button>
                                 </div>
                             </motion.form>
+                        ) : (
+                            <motion.form
+                                key="step3"
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-6 text-center"
+                                onSubmit={handleVerifyEmail}
+                            >
+                                <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <ShieldCheck size={32} />
+                                </div>
+                                <h2 className="text-2xl font-bold text-slate-900">Verify Email</h2>
+                                <p className="text-sm text-slate-500">
+                                    We've sent a 6-digit verification code to <br />
+                                    <span className="text-indigo-600 font-bold">{formData.email}</span>
+                                </p>
+
+                                <div>
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        required
+                                        value={verificationOTP}
+                                        onChange={(e) => setVerificationOTP(e.target.value)}
+                                        placeholder="000000"
+                                        className="w-full text-center tracking-[1em] text-2xl font-black py-4 rounded-2xl border border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {error && (
+                                    <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+                                )}
+
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full btn bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {isLoading ? 'Verifying...' : 'Verify & Finish'}
+                                    {!isLoading && <ArrowRight size={20} />}
+                                </button>
+                            </motion.form>
                         )}
+
                     </AnimatePresence>
 
                     <div className="mt-8 text-center text-sm">

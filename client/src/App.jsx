@@ -3,6 +3,8 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/dashboard/Dashboard';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+
 import Contracts from './pages/contracts/Contracts';
 import ContractCreate from './pages/contracts/ContractCreate';
 import ContractDetails from './pages/contracts/ContractDetails';
@@ -22,6 +24,8 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>

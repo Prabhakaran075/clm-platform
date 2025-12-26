@@ -13,6 +13,8 @@ import {
     Lock
 } from 'lucide-react';
 import LandingNavbar from '../../components/layout/LandingNavbar';
+import LandingChart from '../../components/landing/LandingChart';
+
 
 const Landing = () => {
     const features = [
@@ -126,9 +128,10 @@ const Landing = () => {
                                     <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
                                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
                                 </div>
-                                <div className="aspect-[16/9] bg-slate-900/40 backdrop-blur-3xl flex items-center justify-center">
-                                    <BarChart3 size={80} className="text-indigo-500/20" />
+                                <div className="aspect-[16/9] w-full">
+                                    <LandingChart />
                                 </div>
+
                             </div>
                         </div>
                     </motion.div>

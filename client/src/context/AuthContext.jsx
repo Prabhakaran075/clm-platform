@@ -60,9 +60,9 @@ export const AuthProvider = ({ children }) => {
 
             const { data } = await axios.post('/api/auth/register', formData, config);
 
-            localStorage.setItem('userInfo', JSON.stringify(data));
-            setUser(data);
-            return { success: true };
+            // Don't set user yet, need verification
+            return { success: true, message: data.message };
+
         } catch (error) {
             return {
                 success: false,
@@ -91,9 +91,24 @@ export const AuthProvider = ({ children }) => {
         setUser(updatedInfo);
     };
 
+    const verifyEmail = async (email, otp) => {
+        try {
+            const { data } = await axios.post('/api/auth/verify-email', { email, otp });
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            setUser(data);
+            return { success: true };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Verification failed'
+            };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, updateUser, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, updateUser, verifyEmail, loading }}>
             {children}
         </AuthContext.Provider>
     );
 };
+
