@@ -272,19 +272,32 @@ const logoutUser = async (req, res) => {
 // @desc    Check if email is already registered
 // @route   GET /api/auth/check-email/:email
 // @access  Public
-const checkEmailAvailability = async (req, res) => {
-    const { email } = req.params;
+const checkEmailAvailability = async (req, res, next) => {
+    try {
+        const { email } = req.params;
 
-    const user = await prisma.user.findUnique({
-        where: { email }
-    });
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
 
-    if (user) {
-        return res.json({ available: false, message: 'Email is already registered' });
+        const user = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (user) {
+            return res.json({ available: false, message: 'Email is already registered' });
+        }
+
+        res.json({ available: true, message: 'Email is available' });
+    } catch (error) {
+        console.error('Check email availability error:', error);
+        res.status(500).json({
+            message: 'Error checking email availability',
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
-
-    res.json({ available: true, message: 'Email is available' });
 };
+
 
 
 // @desc    Verify Email OTP during registration
