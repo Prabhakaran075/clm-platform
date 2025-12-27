@@ -25,14 +25,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         <div className="flex flex-col w-64 h-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-r border-slate-100 dark:border-white/5 shadow-2xl md:shadow-none transition-colors duration-500">
             {/* Logo */}
             <div className="flex items-center justify-between h-16 px-6 border-b border-slate-100/50 dark:border-white/5">
-                <div className="flex items-center gap-2 font-bold text-2xl text-slate-800 dark:text-white">
+                <Link
+                    to={navigation[0].href}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-2 font-bold text-2xl text-slate-800 dark:text-white hover:opacity-80 transition-opacity"
+                >
                     <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
                         <FileText size={18} />
                     </div>
-                    <span className="tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400">
+                    <span className="tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-400" >
                         NexCLM
                     </span>
-                </div>
+                </Link>
+
                 {/* Mobile Close Button */}
                 <button
                     onClick={() => setIsOpen(false)}
