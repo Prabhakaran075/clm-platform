@@ -26,7 +26,7 @@ const Register = () => {
     const [avatarPreview, setAvatarPreview] = useState(null);
     const [verificationOTP, setVerificationOTP] = useState('');
     const [emailStatus, setEmailStatus] = useState('none'); // none, checking, available, taken
-    const { register, verifyEmail } = useAuth();
+    const { register, verifyEmail, resendOTP } = useAuth();
     const navigate = useNavigate();
 
 
@@ -127,7 +127,13 @@ const Register = () => {
             );
 
             if (res.success) {
-                setStep(3); // Move to OTP verification step
+                if (res.emailError) {
+                    setError('Account created, but failed to send verification email. Please click "Resend OTP" in the next step.');
+                    // Still move to step 3 so they can try to resend
+                    setTimeout(() => setStep(3), 3000);
+                } else {
+                    setStep(3); // Move to OTP verification step
+                }
             } else {
                 setError(res.error || 'Registration failed. Please try again.');
             }
@@ -472,6 +478,30 @@ const Register = () => {
                                     {isLoading ? 'Verifying...' : 'Verify & Finish'}
                                     {!isLoading && <ArrowRight size={20} />}
                                 </button>
+
+                                <div className="pt-2">
+                                    <p className="text-xs text-slate-500 mb-2">Didn't receive the code?</p>
+                                    <button
+                                        type="button"
+                                        disabled={isLoading}
+                                        onClick={async () => {
+                                            setError('');
+                                            setIsLoading(true);
+                                            const res = await resendOTP(formData.email);
+                                            setIsLoading(false);
+                                            if (res.success) {
+                                                // Temporarily show success in the error field but as a success message
+                                                setError('New code sent successfully!');
+                                                setTimeout(() => setError(''), 3000);
+                                            } else {
+                                                setError(res.error);
+                                            }
+                                        }}
+                                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                    >
+                                        Resend Code
+                                    </button>
+                                </div>
                             </motion.form>
                         )}
 

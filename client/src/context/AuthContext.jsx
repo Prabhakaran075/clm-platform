@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
 
             const { data } = await axios.post('/api/auth/register', formData, config);
 
-            return { success: true, message: data.message };
+            return { success: true, ...data };
 
         } catch (error) {
             return {
@@ -109,8 +109,20 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const resendOTP = async (email) => {
+        try {
+            const { data } = await axios.post('/api/auth/resend-otp', { email });
+            return { success: true, message: data.message };
+        } catch (error) {
+            return {
+                success: false,
+                error: error.response?.data?.message || 'Failed to resend OTP'
+            };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, updateUser, verifyEmail, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, updateUser, verifyEmail, resendOTP, loading }}>
             {children}
         </AuthContext.Provider>
     );

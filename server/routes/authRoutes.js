@@ -13,7 +13,8 @@ const {
     verifyOTP,
     resetPassword,
     verifyEmail,
-    checkEmailAvailability
+    checkEmailAvailability,
+    resendVerificationOTP
 
 
 
@@ -47,6 +48,7 @@ router.post('/forgot-password', forgotPassword);
 router.post('/verify-otp', verifyOTP);
 router.post('/reset-password', resetPassword);
 router.post('/verify-email', verifyEmail);
+router.post('/resend-otp', resendVerificationOTP);
 router.get('/check-email/:email', checkEmailAvailability);
 
 

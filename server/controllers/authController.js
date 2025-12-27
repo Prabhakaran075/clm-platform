@@ -113,7 +113,7 @@ const registerUser = async (req, res, next) => {
             // Send verification email
             const message = `Your email verification OTP is ${otp}. It will expire in 10 minutes.`;
             const html = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333 text-align: center;">
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center;">
                     <h2 style="color: #6366f1;">Welcome to NexCLM</h2>
                     <p>Please verify your email address to get started.</p>
                     <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937; margin: 20px auto; width: fit-content;">
@@ -123,12 +123,22 @@ const registerUser = async (req, res, next) => {
                 </div>
             `;
 
-            await sendEmail({
+            const emailSent = await sendEmail({
                 email,
                 subject: 'Verify Your NexCLM Account',
                 message,
                 html
             });
+
+            if (!emailSent) {
+                // If email fails, we still return 201 because the user IS created, 
+                // but we inform them about the email failure so they can retry resending OTP.
+                return res.status(201).json({
+                    message: 'Account created, but we failed to send the verification email. Please try resending the OTP.',
+                    email: user.email,
+                    emailError: true
+                });
+            }
 
             res.status(201).json({
                 message: 'Registration successful. Please verify your email.',
@@ -350,6 +360,65 @@ const checkEmailAvailability = async (req, res, next) => {
 
 
 
+const resendVerificationOTP = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: 'Email is already verified' });
+        }
+
+        // Generate 6-digit verification OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await prisma.user.update({
+            where: { email },
+            data: {
+                verificationOTP: otp,
+                verificationExpires: otpExpires
+            }
+        });
+
+        const message = `Your new email verification OTP is ${otp}. It will expire in 10 minutes.`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center;">
+                <h2 style="color: #6366f1;">New Verification OTP</h2>
+                <p>Use the following code to verify your NexCLM account.</p>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937; margin: 20px auto; width: fit-content;">
+                    ${otp}
+                </div>
+                <p>This OTP will expire in 10 minutes.</p>
+            </div>
+        `;
+
+        const emailSent = await sendEmail({
+            email,
+            subject: 'New Verification OTP - NexCLM',
+            message,
+            html
+        });
+
+        if (!emailSent) {
+            return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
+        }
+
+        res.json({ message: 'A new verification code has been sent to your email.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // @desc    Verify Email OTP during registration
 // @route   POST /api/auth/verify-email
 // @access  Public
@@ -530,7 +599,8 @@ module.exports = {
     verifyOTP,
     resetPassword,
     verifyEmail,
-    checkEmailAvailability
+    checkEmailAvailability,
+    resendVerificationOTP
 };
 
 
