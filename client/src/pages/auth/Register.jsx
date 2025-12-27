@@ -58,6 +58,8 @@ const Register = () => {
                 const { data } = await axios.get(`/api/auth/check-email/${formData.email}`);
                 setEmailStatus(data.available ? 'available' : 'taken');
             } catch (err) {
+                console.error('Email check error:', err);
+                // If it's a 404 or other error, we don't block the user, but we don't show "available"
                 setEmailStatus('none');
             }
         };
@@ -127,10 +129,10 @@ const Register = () => {
             if (res.success) {
                 setStep(3); // Move to OTP verification step
             } else {
-                setError(res.error);
+                setError(res.error || 'Registration failed. Please try again.');
             }
         } catch (err) {
-            setError('Registration failed. Please try again.');
+            setError('An unexpected error occurred. Please check your connection and try again.');
         } finally {
             setIsLoading(false);
         }
@@ -139,6 +141,12 @@ const Register = () => {
     const handleVerifyEmail = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (verificationOTP.length !== 6) {
+            setError('Please enter a 6-digit OTP');
+            return;
+        }
+
         setIsLoading(true);
         try {
             const res = await verifyEmail(formData.email, verificationOTP);
@@ -148,7 +156,7 @@ const Register = () => {
                 setError(res.error);
             }
         } catch (err) {
-            setError('Verification failed. Please try again.');
+            setError('Verification failed. Please check your internet connection and try again.');
         } finally {
             setIsLoading(false);
         }

@@ -40,9 +40,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return {
                 success: false,
-                error: error.response && error.response.data.message
-                    ? error.response.data.message
-                    : error.message,
+                error: error.response?.data?.message || error.message || 'Login failed. Please check your connection.',
             };
         }
     };
@@ -56,7 +54,9 @@ export const AuthProvider = ({ children }) => {
             formData.append('role', role);
 
             Object.keys(additionalData).forEach(key => {
-                formData.append(key, additionalData[key]);
+                if (additionalData[key] !== null && additionalData[key] !== undefined) {
+                    formData.append(key, additionalData[key]);
+                }
             });
 
             const config = {
@@ -67,15 +67,12 @@ export const AuthProvider = ({ children }) => {
 
             const { data } = await axios.post('/api/auth/register', formData, config);
 
-            // Don't set user yet, need verification
             return { success: true, message: data.message };
 
         } catch (error) {
             return {
                 success: false,
-                error: error.response && error.response.data.message
-                    ? error.response.data.message
-                    : error.message,
+                error: error.response?.data?.message || error.message || 'Registration failed. Please try again.',
             };
         }
     };
@@ -107,7 +104,7 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return {
                 success: false,
-                error: error.response?.data?.message || 'Verification failed'
+                error: error.response?.data?.message || error.message || 'Verification failed. Please try again.'
             };
         }
     };

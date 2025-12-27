@@ -15,13 +15,24 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!email.trim() || !password.trim()) {
+            setError('Please enter both email and password');
+            return;
+        }
+
         setIsLoading(true);
-        const res = await login(email, password);
-        setIsLoading(false);
-        if (res.success) {
-            navigate('/dashboard');
-        } else {
-            setError(res.error);
+        try {
+            const res = await login(email, password);
+            if (res.success) {
+                navigate('/dashboard');
+            } else {
+                setError(res.error);
+            }
+        } catch (err) {
+            setError('An unexpected error occurred. Please try again later.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
