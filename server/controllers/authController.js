@@ -14,7 +14,22 @@ const authUser = async (req, res) => {
         where: { email }
     });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (!user || user.deletedAt) {
+        return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.status !== 'Active') {
+        const statusMsg = user.status === 'Suspended'
+            ? 'Your account has been suspended. Please contact support.'
+            : 'Your account is currently inactive.';
+        return res.status(403).json({ message: statusMsg });
+    }
+
+    if (await bcrypt.compare(password, user.password)) {
+        if (!user.isVerified) {
+            return res.status(401).json({ message: 'Please verify your email address before logging in.' });
+        }
+
         const token = generateToken(user.id);
 
         res.cookie('jwt', token, {
@@ -30,14 +45,13 @@ const authUser = async (req, res) => {
             email: user.email,
             role: user.role,
             avatar: user.avatar,
-            token, // Keep token in response for backward compatibility
+            token,
         });
-    } else if (user && !user.isVerified) {
-        res.status(401).json({ message: 'Please verify your email address before logging in.' });
     } else {
         res.status(401).json({ message: 'Invalid email or password' });
     }
 };
+
 
 
 // @desc    Register a new user

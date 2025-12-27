@@ -18,6 +18,13 @@ enum Role {
   Vendor
 }
 
+enum UserStatus {
+  Active
+  Inactive
+  Suspended
+}
+
+
 model User {
   id                  String   @id @default(uuid())
   name                String
@@ -41,8 +48,11 @@ model User {
   isVerified          Boolean  @default(false)
   verificationOTP     String?
   verificationExpires DateTime?
+  status              UserStatus @default(Active)
+  deletedAt           DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
 }
 
 
