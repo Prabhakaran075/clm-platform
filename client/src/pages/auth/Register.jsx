@@ -128,7 +128,7 @@ const Register = () => {
 
             if (res.success) {
                 if (res.emailError) {
-                    setError(`Account created, but email failed: ${res.details || 'Please try resending OTP'}`);
+                    setError(`Account created, but email failed (${res.details || 'TIMEOUT'}). Please try resending OTP.`);
                     // Still move to step 3 so they can try to resend
                     setTimeout(() => setStep(3), 3000);
                 } else {
