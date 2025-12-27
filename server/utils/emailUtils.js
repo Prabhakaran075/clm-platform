@@ -4,10 +4,11 @@ const { Resend } = require('resend');
 const sendEmail = async (options) => {
     // 1. Try Resend (API-based, most reliable on Render/Vercel)
     if (process.env.RESEND_API_KEY) {
+        console.log('DEBUG: Attempting to send email via Resend API...');
         try {
             const resend = new Resend(process.env.RESEND_API_KEY);
-            const { error } = await resend.emails.send({
-                from: 'NexCLM <onboarding@resend.dev>', // Update after domain verification
+            const { data, error } = await resend.emails.send({
+                from: 'NexCLM <onboarding@resend.dev>',
                 to: options.email,
                 subject: options.subject,
                 text: options.message,
@@ -15,23 +16,26 @@ const sendEmail = async (options) => {
             });
 
             if (error) {
-                console.error('Resend API error:', error);
+                console.error('DEBUG: Resend API returned an error:', JSON.stringify(error, null, 2));
                 throw new Error(error.message);
             }
 
+            console.log('DEBUG: Resend API success:', data);
             return { success: true };
         } catch (error) {
-            console.error('Resend failed, trying SMTP fallback...', error);
-            // Continue to SMTP fallback if Resend fails
+            console.error('DEBUG: Resend Exception caught:', error.message);
+            console.error('DEBUG: Falling back to SMTP...');
         }
+    } else {
+        console.log('DEBUG: RESEND_API_KEY not found. Skipping Resend.');
     }
 
     // 2. SMTP Configuration (Fallback)
-    // For production, you should add your SMTP settings in .env
-    // Default to Gmail SMTPS (Port 465) which is most reliable on Render
     const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
     const port = parseInt(process.env.EMAIL_PORT) || 465;
     const secure = port === 465;
+
+    console.log(`DEBUG: Attempting SMTP with Host: ${host}, Port: ${port}, Secure: ${secure}`);
 
     const transportConfig = {
         host,
@@ -39,13 +43,16 @@ const sendEmail = async (options) => {
         secure,
         auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+            pass: process.env.EMAIL_PASS ? '********' : 'NOT SET',
         },
-        family: 4, // Force IPv4 to prevent IPv6 timeout issues on Render
+        family: 4,
         connectionTimeout: 15000,
         greetingTimeout: 15000,
         socketTimeout: 15000,
     };
+
+    // We need the actual password for the transporter
+    transportConfig.auth.pass = process.env.EMAIL_PASS;
 
     const transporter = nodemailer.createTransport(transportConfig);
 
@@ -57,28 +64,21 @@ const sendEmail = async (options) => {
         html: options.html,
     };
 
-    // Development Logging
-    // If no email credentials are provided and Resend is not configured, log to console for development
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        if (!process.env.RESEND_API_KEY) {
-            console.log('----------------------------------------------------');
-            console.log('DEVELOPMENT MODE: EMAIL LOG');
-            console.log(`To: ${options.email}`);
-            console.log(`Subject: ${options.subject}`);
-            console.log(`Message: ${options.message}`);
-            console.log('----------------------------------------------------');
-            return { success: true };
-        }
-    }
-
     try {
-        await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('DEBUG: SMTP success:', info.messageId);
         return { success: true };
     } catch (error) {
-        console.error('SMTP Email error:', error);
+        console.error('DEBUG: SMTP Full Error Detail:');
+        console.error('Code:', error.code);
+        console.error('Command:', error.command);
+        console.error('Response:', error.response);
+        console.error('Stack:', error.stack);
+
         return {
             success: false,
-            error: error.message || 'Connection timeout'
+            error: error.message || 'Connection timeout',
+            details: error.code || 'TIMEOUT'
         };
     }
 };
