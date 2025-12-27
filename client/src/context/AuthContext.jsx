@@ -2,7 +2,8 @@ import { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
 // Set up base URL for API calls
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:4001';
+// Relative path to support Vercel context rewrites
+axios.defaults.baseURL = '/api';
 axios.defaults.withCredentials = true;
 
 
