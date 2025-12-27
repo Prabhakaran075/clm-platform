@@ -16,7 +16,8 @@ const sendEmail = async (options) => {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        connectionTimeout: 20000, // Increased to 20 seconds
+        family: 4, // Force IPv4 to prevent IPv6 timeout issues on Render
+        connectionTimeout: 20000,
         greetingTimeout: 20000,
         socketTimeout: 20000,
     };
