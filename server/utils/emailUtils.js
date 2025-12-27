@@ -28,7 +28,7 @@ const sendEmail = async (options) => {
         const resend = new Resend(process.env.RESEND_API_KEY);
 
         const { data, error } = await resend.emails.send({
-            from: 'NexCLM <no-reply@hr@nexgennextopia.com>', // Verified company domain
+            from: 'NexCLM <no-reply@prabhakarans154@gmail.com>', // Update after domain verification
             to: options.email,
             subject: options.subject,
             text: options.message,
