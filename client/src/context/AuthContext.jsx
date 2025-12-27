@@ -2,9 +2,10 @@ import { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
 // Set up base URL for API calls
-// Relative path to support Vercel context rewrites
-axios.defaults.baseURL = '/api';
+// Set to empty string because our paths already start with /api
+axios.defaults.baseURL = '';
 axios.defaults.withCredentials = true;
+
 
 
 const AuthContext = createContext();

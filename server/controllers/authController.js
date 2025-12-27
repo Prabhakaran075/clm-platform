@@ -293,7 +293,8 @@ const checkEmailAvailability = async (req, res, next) => {
         console.error('Check email availability error:', error);
         res.status(500).json({
             message: 'Error checking email availability',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            error: error.message, // Temporarily enabled for debugging
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };
