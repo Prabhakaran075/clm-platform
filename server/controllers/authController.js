@@ -123,20 +123,21 @@ const registerUser = async (req, res, next) => {
                 </div>
             `;
 
-            const emailSent = await sendEmail({
+            const emailResult = await sendEmail({
                 email,
                 subject: 'Verify Your NexCLM Account',
                 message,
                 html
             });
 
-            if (!emailSent) {
+            if (!emailResult.success) {
                 // If email fails, we still return 201 because the user IS created, 
                 // but we inform them about the email failure so they can retry resending OTP.
                 return res.status(201).json({
-                    message: 'Account created, but we failed to send the verification email. Please try resending the OTP.',
+                    message: 'Account created, but we failed to send the verification email.',
                     email: user.email,
-                    emailError: true
+                    emailError: true,
+                    details: emailResult.error
                 });
             }
 
@@ -402,15 +403,18 @@ const resendVerificationOTP = async (req, res, next) => {
             </div>
         `;
 
-        const emailSent = await sendEmail({
+        const emailResult = await sendEmail({
             email,
             subject: 'New Verification OTP - NexCLM',
             message,
             html
         });
 
-        if (!emailSent) {
-            return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
+        if (!emailResult.success) {
+            return res.status(500).json({
+                message: 'Failed to send verification email.',
+                details: emailResult.error
+            });
         }
 
         res.json({ message: 'A new verification code has been sent to your email.' });

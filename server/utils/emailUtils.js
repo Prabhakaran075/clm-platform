@@ -4,19 +4,27 @@ const sendEmail = async (options) => {
     // Create a transporter
     // For production, you should add your SMTP settings in .env
     const transportConfig = {
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: process.env.EMAIL_PORT == 465, // true for 465, false for other ports
+        service: 'gmail',
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,
-        socketTimeout: 10000,
     };
 
-    const transporter = nodemailer.createTransport(transportConfig);
+    // If custom host is provided, override service
+    if (process.env.EMAIL_HOST && process.env.EMAIL_HOST !== 'smtp.gmail.com') {
+        transportConfig.host = process.env.EMAIL_HOST;
+        transportConfig.port = parseInt(process.env.EMAIL_PORT) || 587;
+        transportConfig.secure = transportConfig.port === 465;
+        delete transportConfig.service;
+    }
+
+    const transporter = nodemailer.createTransport({
+        ...transportConfig,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+    });
 
     const mailOptions = {
         from: '"NexCLM Support" <support@nexclm.com>',
@@ -39,10 +47,15 @@ const sendEmail = async (options) => {
 
     try {
         await transporter.sendMail(mailOptions);
-        return true;
+        return { success: true };
     } catch (error) {
         console.error('Email send error:', error);
-        return false;
+        return {
+            success: false,
+            error: error.message,
+            code: error.code,
+            command: error.command
+        };
     }
 };
 
