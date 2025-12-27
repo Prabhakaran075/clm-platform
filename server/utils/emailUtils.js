@@ -3,29 +3,25 @@ const nodemailer = require('nodemailer');
 const sendEmail = async (options) => {
     // Create a transporter
     // For production, you should add your SMTP settings in .env
+    // Default to Gmail SMTPS (Port 465) which is most reliable on Render
+    const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
+    const port = parseInt(process.env.EMAIL_PORT) || 465;
+    const secure = port === 465;
+
     const transportConfig = {
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // Use SSL/TLS
+        host,
+        port,
+        secure,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
+        connectionTimeout: 20000, // Increased to 20 seconds
+        greetingTimeout: 20000,
+        socketTimeout: 20000,
     };
 
-    // If custom host is provided, override defaults
-    if (process.env.EMAIL_HOST && process.env.EMAIL_HOST !== 'smtp.gmail.com') {
-        transportConfig.host = process.env.EMAIL_HOST;
-        transportConfig.port = parseInt(process.env.EMAIL_PORT) || 587;
-        transportConfig.secure = transportConfig.port === 465;
-    }
-
-    const transporter = nodemailer.createTransport({
-        ...transportConfig,
-        connectionTimeout: 15000, // 15 seconds
-        greetingTimeout: 15000,
-        socketTimeout: 15000,
-    });
+    const transporter = nodemailer.createTransport(transportConfig);
 
     const mailOptions = {
         from: '"NexCLM Support" <support@nexclm.com>',
