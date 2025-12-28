@@ -47,6 +47,7 @@ model User {
   resetPasswordExpires DateTime?
   isVerified          Boolean  @default(false)
   verificationOTP     String?
+  verificationToken   String?  @unique
   verificationExpires DateTime?
   status              UserStatus @default(Active)
   deletedAt           DateTime?

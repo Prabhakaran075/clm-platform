@@ -436,73 +436,62 @@ const Register = () => {
                                 </div>
                             </motion.form>
                         ) : (
-                            <motion.form
+                            <motion.div
                                 key="step3"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
                                 transition={{ duration: 0.3 }}
-                                className="space-y-6 text-center"
-                                onSubmit={handleVerifyEmail}
+                                className="space-y-6 text-center py-4"
                             >
-                                <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <ShieldCheck size={32} />
+                                <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                                    <Mail size={40} />
                                 </div>
-                                <h2 className="text-2xl font-bold text-slate-900">Verify Email</h2>
-                                <p className="text-sm text-slate-500">
-                                    We've sent a 6-digit verification code to <br />
+
+                                <h2 className="text-2xl font-bold text-slate-900">Check Your Email</h2>
+                                <p className="text-slate-500 leading-relaxed">
+                                    We've sent a verification link to <br />
                                     <span className="text-indigo-600 font-bold">{formData.email}</span>
                                 </p>
 
-                                <div>
-                                    <input
-                                        type="text"
-                                        maxLength={6}
-                                        required
-                                        value={verificationOTP}
-                                        onChange={(e) => setVerificationOTP(e.target.value)}
-                                        placeholder="000000"
-                                        className="w-full text-center tracking-[1em] text-2xl font-black py-4 rounded-2xl border border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all"
-                                    />
+                                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-sm text-slate-600">
+                                    <p>Please click the button in the email to verify your account and get started.</p>
                                 </div>
 
                                 {error && (
-                                    <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>
+                                    <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg animate-pulse">{error}</p>
                                 )}
 
-                                <button
-                                    type="submit"
-                                    disabled={isLoading}
-                                    className="w-full btn bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2"
-                                >
-                                    {isLoading ? 'Verifying...' : 'Verify & Finish'}
-                                    {!isLoading && <ArrowRight size={20} />}
-                                </button>
-
-                                <div className="pt-2">
-                                    <p className="text-xs text-slate-500 mb-2">Didn't receive the code?</p>
+                                <div className="space-y-4 pt-4">
                                     <button
                                         type="button"
                                         disabled={isLoading}
                                         onClick={async () => {
                                             setError('');
                                             setIsLoading(true);
+                                            // We'll reuse the resendOTP function but the backend will now send a link
                                             const res = await resendOTP(formData.email);
                                             setIsLoading(false);
                                             if (res.success) {
-                                                // Temporarily show success in the error field but as a success message
-                                                setError('New code sent successfully!');
+                                                setError('Verification link resent!');
                                                 setTimeout(() => setError(''), 3000);
                                             } else {
                                                 setError(res.error);
                                             }
                                         }}
-                                        className="text-sm font-bold text-indigo-600 hover:text-indigo-700 disabled:opacity-50"
+                                        className="w-full btn bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-indigo-100 transition-all"
                                     >
-                                        Resend Code
+                                        {isLoading ? 'Sending...' : 'Resend Link'}
                                     </button>
+
+                                    <Link
+                                        to="/login"
+                                        className="block text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+                                    >
+                                        Return to login
+                                    </Link>
                                 </div>
-                            </motion.form>
+                            </motion.div>
                         )}
 
                     </AnimatePresence>

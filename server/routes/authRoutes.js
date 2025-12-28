@@ -16,7 +16,8 @@ const {
     checkEmailAvailability,
     resendVerificationOTP,
     requestOTP,
-    verifyOTPUnified
+    verifyOTPUnified,
+    verifyEmailByLink
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -47,6 +48,7 @@ router.post('/forgot-password', forgotPassword);
 router.post('/verify-otp', verifyOTP);
 router.post('/reset-password', resetPassword);
 router.post('/verify-email', verifyEmail);
+router.get('/verify-link/:token', verifyEmailByLink);
 router.post('/resend-otp', resendVerificationOTP);
 router.post('/request-otp', requestOTP);
 router.post('/verify-otp-unified', verifyOTPUnified);

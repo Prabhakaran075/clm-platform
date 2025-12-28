@@ -2,6 +2,7 @@ const { prisma } = require('../config/db');
 const generateToken = require('../utils/generateToken');
 const bcrypt = require('bcryptjs');
 const sendEmail = require('../utils/emailUtils');
+const crypto = require('crypto');
 
 
 // @desc    Auth user & get token
@@ -87,9 +88,9 @@ const registerUser = async (req, res, next) => {
             avatarPath = `/uploads/${req.file.filename}`;
         }
 
-        // Generate 6-digit verification OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        // Generate secure verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const otpExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         const user = await prisma.user.create({
             data: {
@@ -104,22 +105,36 @@ const registerUser = async (req, res, next) => {
                 department: department || 'General',
                 avatar: avatarPath,
                 isVerified: false,
-                verificationOTP: otp,
+                verificationToken: verificationToken,
                 verificationExpires: otpExpires
             }
         });
 
         if (user) {
+            const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
             // Send verification email
-            const message = `Your email verification OTP is ${otp}. It will expire in 10 minutes.`;
+            const message = `Please verify your email by clicking the link: ${verificationUrl}`;
             const html = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center;">
-                    <h2 style="color: #6366f1;">Welcome to NexCLM</h2>
-                    <p>Please verify your email address to get started.</p>
-                    <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937; margin: 20px auto; width: fit-content;">
-                        ${otp}
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; text-align: center; background-color: #f9fafb;">
+                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                        <h2 style="color: #4f46e5; margin-bottom: 24px; font-size: 28px;">Welcome to NexCLM</h2>
+                        <p style="font-size: 16px; line-height: 24px; color: #4b5563; margin-bottom: 32px;">
+                            Thanks for signing up! To get started with your account, please verify your email address by clicking the button below.
+                        </p>
+                        <a href="${verificationUrl}" 
+                           style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 14px 28px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; transition: background-color 0.2s;">
+                           Verify My Account
+                        </a>
+                        <p style="margin-top: 32px; font-size: 14px; color: #9ca3af;">
+                            This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.
+                        </p>
+                        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+                        <p style="font-size: 12px; color: #9ca3af; line-height: 18px;">
+                            If the button doesn't work, copy and paste this link into your browser:<br>
+                            <a href="${verificationUrl}" style="color: #4f46e5; word-break: break-all;">${verificationUrl}</a>
+                        </p>
                     </div>
-                    <p>This OTP will expire in 10 minutes.</p>
                 </div>
             `;
 
@@ -131,10 +146,8 @@ const registerUser = async (req, res, next) => {
             });
 
             if (!emailResult.success) {
-                // If email fails, we still return 201 because the user IS created, 
-                // but we inform them about the email failure so they can retry resending OTP.
                 return res.status(201).json({
-                    message: 'Account created, but we failed to send the verification email.',
+                    message: 'Account created, but we failed to send the verification link.',
                     email: user.email,
                     emailError: true,
                     details: emailResult.error
@@ -142,7 +155,7 @@ const registerUser = async (req, res, next) => {
             }
 
             res.status(201).json({
-                message: 'Registration successful. Please verify your email.',
+                message: 'Registration successful. Please check your email for a verification link.',
                 email: user.email
             });
         } else {
@@ -379,33 +392,47 @@ const resendVerificationOTP = async (req, res, next) => {
             return res.status(400).json({ message: 'Email is already verified' });
         }
 
-        // Generate 6-digit verification OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        // Generate new secure verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const otpExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
         await prisma.user.update({
             where: { email },
             data: {
-                verificationOTP: otp,
+                verificationToken: verificationToken,
                 verificationExpires: otpExpires
             }
         });
 
-        const message = `Your new email verification OTP is ${otp}. It will expire in 10 minutes.`;
+        const verificationUrl = `${process.env.CLIENT_URL}/verify-email/${verificationToken}`;
+
+        const message = `Please verify your email by clicking the link: ${verificationUrl}`;
         const html = `
-            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center;">
-                <h2 style="color: #6366f1;">New Verification OTP</h2>
-                <p>Use the following code to verify your NexCLM account.</p>
-                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937; margin: 20px auto; width: fit-content;">
-                    ${otp}
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; text-align: center; background-color: #f9fafb;">
+                <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    <h2 style="color: #4f46e5; margin-bottom: 24px; font-size: 28px;">Verification Link Resent</h2>
+                    <p style="font-size: 16px; line-height: 24px; color: #4b5563; margin-bottom: 32px;">
+                        You requested a new verification link for your NexCLM account. Please click the button below to verify your email address.
+                    </p>
+                    <a href="${verificationUrl}" 
+                       style="display: inline-block; background-color: #4f46e5; color: #ffffff; padding: 14px 28px; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; transition: background-color 0.2s;">
+                       Verify My Account
+                    </a>
+                    <p style="margin-top: 32px; font-size: 14px; color: #9ca3af;">
+                        This link will expire in 24 hours.
+                    </p>
+                    <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 32px 0;">
+                    <p style="font-size: 12px; color: #9ca3af; line-height: 18px;">
+                        If the button doesn't work, copy and paste this link into your browser:<br>
+                        <a href="${verificationUrl}" style="color: #4f46e5; word-break: break-all;">${verificationUrl}</a>
+                    </p>
                 </div>
-                <p>This OTP will expire in 10 minutes.</p>
             </div>
         `;
 
         const emailResult = await sendEmail({
             email,
-            subject: 'New Verification OTP - NexCLM',
+            subject: 'New Verification Link - NexCLM',
             message,
             html
         });
@@ -417,7 +444,7 @@ const resendVerificationOTP = async (req, res, next) => {
             });
         }
 
-        res.json({ message: 'A new verification code has been sent to your email.' });
+        res.json({ message: 'A new verification link has been sent to your email.' });
     } catch (error) {
         next(error);
     }
@@ -726,6 +753,59 @@ const verifyOTPUnified = async (req, res, next) => {
     }
 };
 
+// @desc    Verify Email by Link
+// @route   GET /api/auth/verify-link/:token
+// @access  Public
+const verifyEmailByLink = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).json({ message: 'Verification token is required' });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { verificationToken: token }
+        });
+
+        if (!user || new Date() > user.verificationExpires) {
+            return res.status(400).json({ message: 'Invalid or expired verification link' });
+        }
+
+        if (user.isVerified) {
+            return res.status(200).json({ message: 'Email is already verified' });
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { verificationToken: token },
+            data: {
+                isVerified: true,
+                verificationToken: null,
+                verificationExpires: null
+            }
+        });
+
+        const authToken = generateToken(updatedUser.id);
+
+        res.cookie('jwt', authToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+
+        res.json({
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            token: authToken,
+            message: 'Email verified successfully. You are now logged in.'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     authUser,
     registerUser,
@@ -741,7 +821,8 @@ module.exports = {
     checkEmailAvailability,
     resendVerificationOTP,
     requestOTP,
-    verifyOTPUnified
+    verifyOTPUnified,
+    verifyEmailByLink
 };
 
 
