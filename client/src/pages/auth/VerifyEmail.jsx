@@ -1,26 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const VerifyEmail = () => {
     const { token } = useParams();
     const navigate = useNavigate();
+    const { verifyLink } = useAuth();
     const [status, setStatus] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('Please wait while we verify your email address...');
 
     useEffect(() => {
         const verify = async () => {
             try {
-                const response = await axios.get(`/api/auth/verify-link/${token}`);
+                const res = await verifyLink(token);
                 setStatus('success');
-                setMessage(response.data.message || 'Email verified successfully!');
-
-                // Optional: Store token if the backend returns one (auto-login)
-                if (response.data.token) {
-                    localStorage.setItem('token', response.data.token);
-                }
+                setMessage(res.message || 'Email verified successfully!');
 
                 // Redirect to dashboard after 3 seconds
                 setTimeout(() => {

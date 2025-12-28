@@ -109,6 +109,17 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const verifyLink = async (token) => {
+        try {
+            const { data } = await axios.get(`/api/auth/verify-link/${token}`);
+            localStorage.setItem('userInfo', JSON.stringify(data));
+            setUser(data);
+            return { success: true, message: data.message };
+        } catch (error) {
+            throw error;
+        }
+    };
+
     const resendOTP = async (email) => {
         try {
             const { data } = await axios.post('/api/auth/resend-otp', { email });
@@ -122,7 +133,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, updateUser, verifyEmail, resendOTP, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, updateUser, verifyEmail, verifyLink, resendOTP, loading }}>
             {children}
         </AuthContext.Provider>
     );
