@@ -1,73 +1,72 @@
-const sgMail = require('@sendgrid/mail');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
+/**
+ * @desc    Simple SMTP Email Sender using Nodemailer
+ * @param   {Object} options - { email, subject, message, html }
+ */
 const sendEmail = async (options) => {
-    // 1. Try SendGrid (Primary for Company Email IDs)
-    if (process.env.SENDGRID_API_KEY) {
-        console.log(`DEBUG: Attempting to send email to ${options.email} via SendGrid API...`);
-        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    // 1. Check for Credentials
+    const emailUser = process.env.EMAIL_USER || 'prabhakarans154@gmail.com';
+    const emailPass = process.env.EMAIL_PASS; // App Password
 
-        const msg = {
-            to: options.email,
-            from: process.env.COMPANY_EMAIL || 'no-reply@nexgennextopia.com', // Must be verified in SendGrid
-            subject: options.subject,
-            text: options.message,
-            html: options.html,
-        };
+    if (!emailPass) {
+        console.error('SYSTEM ERROR: EMAIL_PASS (App Password) is missing.');
 
-        try {
-            const response = await sgMail.send(msg);
-            console.log('DEBUG: SendGrid API success');
-            return { success: true };
-        } catch (error) {
-            console.error('DEBUG: SendGrid API error:', error.response ? error.response.body : error.message);
-            // If SendGrid fails, try Resend fallback if available
-        }
-    }
-
-    // 2. Try Resend (Fallback)
-    if (process.env.RESEND_API_KEY) {
-        console.log(`DEBUG: Sending email to ${options.email} via Resend API...`);
-        try {
-            const resend = new Resend(process.env.RESEND_API_KEY);
-            const { data, error } = await resend.emails.send({
-                from: 'NexCLM <onboarding@resend.dev>', // Free trial mode
-                to: options.email,
-                subject: options.subject,
-                text: options.message,
-                html: options.html,
-            });
-
-            if (error) {
-                console.error('DEBUG: Resend API returned an error:', JSON.stringify(error, null, 2));
-                throw new Error(error.message);
-            }
-
-            console.log('DEBUG: Resend API success:', data.id);
-            return { success: true };
-        } catch (error) {
-            console.error('DEBUG: Resend Exception caught:', error.message);
-        }
-    }
-
-    // 3. Development Logging (If no keys are found)
-    if (!process.env.SENDGRID_API_KEY && !process.env.RESEND_API_KEY) {
+        // In development, log to console instead of failing
         if (process.env.NODE_ENV !== 'production') {
             console.log('----------------------------------------------------');
-            console.log('DEVELOPMENT MODE: EMAIL LOG (MISSING API KEYS)');
+            console.log('DEVELOPMENT MODE: EMAIL LOG (NO APP PASSWORD)');
             console.log(`To: ${options.email}`);
             console.log(`Subject: ${options.subject}`);
-            console.log(`Message: ${options.message}`);
+            console.log(`Code: ${options.message}`);
             console.log('----------------------------------------------------');
             return { success: true };
         }
+
+        return {
+            success: false,
+            error: 'Email password missing',
+            details: 'CONFIG_ERR'
+        };
     }
 
-    return {
-        success: false,
-        error: 'Email service configuration missing',
-        details: 'MISSING_API_CREDENTIALS'
-    };
+    try {
+        console.log(`DEBUG: Sending SMTP email to ${options.email} via Gmail...`);
+
+        // 2. Create Transporter (Explicit Gmail SMTP)
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com',
+            port: 465,
+            secure: true, // Use SSL
+            auth: {
+                user: emailUser,
+                pass: emailPass
+            }
+        });
+
+        // 3. Define Mail Options
+        const mailOptions = {
+            from: `"NexGen Support" <${emailUser}>`,
+            to: options.email,
+            subject: options.subject,
+            text: options.message,
+            html: options.html
+        };
+
+        // 4. Send the Email
+        const info = await transporter.sendMail(mailOptions);
+        console.log('DEBUG: SMTP Email sent successfully:', info.messageId);
+
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        console.error('DEBUG: SMTP Exception caught:', error.message);
+
+        return {
+            success: false,
+            error: error.message || 'SMTP delivery failed',
+            details: 'SMTP_ERR'
+        };
+    }
 };
 
 module.exports = sendEmail;

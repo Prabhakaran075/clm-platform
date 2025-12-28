@@ -591,6 +591,141 @@ const resetPassword = async (req, res, next) => {
 };
 
 
+// @desc    Simplified Request OTP
+// @route   POST /api/auth/request-otp
+// @access  Public
+const requestOTP = async (req, res, next) => {
+    try {
+        const { email, type } = req.body; // type: 'verification' or 'reset'
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate 6-digit numeric OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        const updateData = {};
+        let subject = '';
+        let title = '';
+
+        if (type === 'reset') {
+            updateData.resetPasswordOTP = otp;
+            updateData.resetPasswordExpires = otpExpires;
+            subject = 'Password Reset OTP - NexCLM';
+            title = 'Password Reset OTP';
+        } else {
+            // Default to verification
+            updateData.verificationOTP = otp;
+            updateData.verificationExpires = otpExpires;
+            subject = 'Verify Your NexCLM Account';
+            title = 'Verification OTP';
+        }
+
+        await prisma.user.update({
+            where: { email },
+            data: updateData
+        });
+
+        const html = `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333; text-align: center;">
+                <h2 style="color: #6366f1;">${title}</h2>
+                <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937; margin: 20px auto; width: fit-content;">
+                    ${otp}
+                </div>
+                <p>This OTP will expire in 10 minutes.</p>
+            </div>
+        `;
+
+        const emailResult = await sendEmail({
+            email,
+            subject,
+            message: `Your OTP is ${otp}`,
+            html
+        });
+
+        if (!emailResult.success) {
+            return res.status(500).json({
+                message: 'Failed to send OTP email.',
+                details: emailResult.error
+            });
+        }
+
+        res.json({ message: 'OTP sent successfully to your email.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Simplified Verify OTP
+// @route   POST /api/auth/verify-otp-unified
+// @access  Public
+const verifyOTPUnified = async (req, res, next) => {
+    try {
+        const { email, otp, type } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ message: 'Email and OTP are required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        let isValid = false;
+        if (type === 'reset') {
+            isValid = user.resetPasswordOTP === otp && new Date() <= user.resetPasswordExpires;
+        } else {
+            isValid = user.verificationOTP === otp && new Date() <= user.verificationExpires;
+        }
+
+        if (!isValid) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+
+        // If it's verification, mark as verified and log in
+        if (type !== 'reset') {
+            const updatedUser = await prisma.user.update({
+                where: { email },
+                data: {
+                    isVerified: true,
+                    verificationOTP: null,
+                    verificationExpires: null
+                }
+            });
+
+            const token = generateToken(updatedUser.id);
+            res.cookie('jwt', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'Lax',
+                maxAge: 24 * 60 * 60 * 1000
+            });
+
+            return res.json({
+                id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                token,
+                message: 'Email verified and logged in successfully.'
+            });
+        }
+
+        res.json({ message: 'OTP verified successfully.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     authUser,
     registerUser,
@@ -604,7 +739,9 @@ module.exports = {
     resetPassword,
     verifyEmail,
     checkEmailAvailability,
-    resendVerificationOTP
+    resendVerificationOTP,
+    requestOTP,
+    verifyOTPUnified
 };
 
 
